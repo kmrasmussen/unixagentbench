@@ -1,6 +1,6 @@
-from agentshells.unixagent9b import AgentShell
+from agentshells.shell1 import AgentShell
 
-tw = AgentShell()
+tw = AgentShell(cwd='/home/ec2-user/projects/unixagentbench/challenges/challenge1')
 try:
     print("Terminal Wrapper: Type your command and press enter. Type 'exit' to quit.")
 

@@ -1,17 +1,28 @@
-from agentshells.unixagent9b import AgentShell
+from agentshells.shell1 import AgentShell
 
 import os
 import requests
 import json
 import re
 
+challenges_dir = '/home/ec2-user/projects/unixagentbench/challenges/'
+challenge_id = '001'
+challenge_dir = os.path.join(challenges_dir, challenge_id)
+challenge_workdir = os.path.join(challenge_dir, 'workdir')
+assert os.path.exists(challenge_dir), f'Challenge dir {challenge_dir} does not exist'
+assert os.path.exists(challenge_workdir), f'Challenge workdir {challenge_workdir} does not exist'
+task_prompt_txt_file_path = os.path.join(challenge_dir, 'task_prompt.txt')
+assert os.path.exists(task_prompt_txt_file_path), f'Task prompt file {task_prompt_txt_file_path} does not exist'
+task_prompt = open(task_prompt_txt_file_path).read().strip()
+
 '''
 openai/gpt-4-turbo-preview
 openai/gpt-3.5-turbo
 01-ai/yi-34b-chat
 google/gemini-pro
+mistralai/mixtral-8x7b
 '''
-model = 'openai/gpt-3.5-turbo'
+model = 'openai/gpt-3.5-turbo' #'mistralai/mixtral-8x7b'
 
 # get OPENROUTER_API_KEY from env
 OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
@@ -35,15 +46,15 @@ def extract_xml_structures(input_string):
 messages = [
     {
         "role": "user",
-        "content": "You are a friendly chatbot that has access to a stateful unix shell to help with the task described in the <task> tag. You can run commands and access the filesystem, by using the <stdin> tag to specify input to the shell. Instead of a human user that will interact with you, the user response will be the output from the shell given in the <stdout> command. <task>Your current task is this: Make a new folder called hey, go into it and determine the absolute path. Then make a text file inside the folder called yo with the content 'hello world'. Finally, print the contents of the folder.</task>. If you think you're done with the entire task., use the <done /> tag. DO NOT JUST RESPOND WITH CODE, THE CODE HAS TO BE IN STDIN TAG TO WORK."
+        "content": f"You are a friendly chatbot that has access to a stateful unix shell to help with the task described in the <task> tag. You can run commands and access the filesystem, by using the <stdin> tag to specify input to the shell. Instead of a human user that will interact with you, the user response will be the output from the shell given in the <stdout> command. \n Your current task is this:\n  <task>\n{task_prompt}\n</task>\nIf you think you're done with the entire task., use the <done /> tag as a standalone tag (not inside stdin tag of course). DO NOT JUST RESPOND WITH CODE, THE CODE HAS TO BE INSIDE <stdin> TAGS TO WORK."
     },
     {
         "role": "assistant",
-        "content": "Let's start by looking at the current dir to get a hang of it. \n <stdin>ls</stdin>"
+        "content": "Let's start by looking at the current dir to get a hang of it. \n <stdin>pwd</stdin>"
     },
     {
         "role": "user",
-        "content": "<stdout>README.md\nagent1.py\nagent_or1.py\nagentshells\nchallenges\nin.jsonl\nout.txt</stdout>"
+        "content": f"<stdout>{challenge_workdir}</stdout>"
     }
 ]
 
@@ -73,7 +84,7 @@ def get_response(add_assistant_response=True):
         })
     return response_text
 
-tw = AgentShell()
+tw = AgentShell(cwd=challenge_workdir)
 max_rounds = 10
 for round_i in range(max_rounds):
     print('Round', round_i)
