@@ -1,0 +1,2 @@
+cp foo/file1.txt bar/file1.txt
+cp foo/file2.txt bar/file2.txt

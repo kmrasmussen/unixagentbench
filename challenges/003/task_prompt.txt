@@ -1,0 +1,10 @@
+Within the current working directory create a directory unix-basics
+with the following substructure of directories:
+
+unix-basics
+├── docs
+│   ├── notes
+│   └── reports
+├── scripts
+│   └── backup
+└── temp

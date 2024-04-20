@@ -1,0 +1,3 @@
+I have aws-cli installed. Use it to determine the availability
+zone of my t3 medium ec2 instance. Save the answer in a file
+called answer.txt

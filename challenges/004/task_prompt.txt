@@ -1,0 +1,3 @@
+Download https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js
+and keep the file name. Determine the number of characters in the file and
+save it in a new file called answer.txt

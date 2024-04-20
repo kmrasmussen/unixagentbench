@@ -1,6 +1,6 @@
 import os
 challenges_dir = '/home/ec2-user/projects/unixagentbench/challenges/'
-model = 'openai/gpt-3.5-turbo' #'mistralai/mixtral-8x7b'
+model = 'openai/gpt-4-turbo-preview' #'openai/gpt-3.5-turbo' #'mistralai/mixtral-8x7b'
 OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
 '''
 openai/gpt-4-turbo-preview

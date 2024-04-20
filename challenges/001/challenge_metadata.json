@@ -1,0 +1,3 @@
+{
+    "challenge_prompt": "Make a new folder called hey, go into it and determine the absolute path. Then make a text file inside the folder called yo with the content 'hello world'. Finally, print the contents of the folder."
+}
