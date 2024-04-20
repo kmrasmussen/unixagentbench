@@ -5,21 +5,6 @@ from os.path import exists, join
 from config import *
 
 def extract_xml_structures(input_string):
-    pattern = r'<(\w+)>(.+?)</\1>'
-    matches = re.findall(pattern, input_string)
-    
-    result = []
-    for match in matches:
-        tag, content = match
-        element = {
-            'tag': tag,
-            'content': content.strip()
-        }
-        result.append(element)
-    
-    return result
-
-def extract_xml_structures2(input_string):
     pattern = r'<(\w+)(?:>(.*?)</\1>|/>)'  # Updated pattern to handle empty tags
     matches = re.findall(pattern, input_string)
     
@@ -59,23 +44,7 @@ def get_completion(messages, model, or_api_key, add_assistant_response=True):
         })
     return response_text
 
-import filecmp
-
-def workdir_postdir_compare(dir1, dir2):
-    dir1 = join(challenges_dir,'001/dirs/workdir')
-    dir2 = join(challenges_dir,'001/dirs/post')
-
-    dcmp = filecmp.dircmp(dir1, dir2)
-    print("Files only in {}: {}".format(dir1, dcmp.left_only))
-    print("Files only in {}: {}".format(dir2, dcmp.right_only))
-    print("Common files, same content: {}".format(dcmp.common_files))
-    print("Common files but different: {}".format(dcmp.diff_files))
-    print("Common subdirectories: {}".format(dcmp.common_dirs))
-
 def diff_workdir_postdir_compare(dir1, dir2):
-    dir1 = join(challenges_dir,'001/dirs/workdir')
-    dir2 = join(challenges_dir,'001/dirs/post')
-
     # using subprocess do diff -r dir1 dir2 and get string output
     import subprocess
     cmd = f'diff -r {dir1} {dir2}'

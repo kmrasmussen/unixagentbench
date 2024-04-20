@@ -16,7 +16,7 @@ def start_agent(challenge, model, max_rounds):
         response_text = get_completion(
             messages, model, OPENROUTER_API_KEY, add_assistant_response=True)
         print('ASSISTANT:', response_text)
-        xml_structures = extract_xml_structures2(response_text)
+        xml_structures = extract_xml_structures(response_text)
         print('XML:', xml_structures)
         #assert len(xml_structures) > 0, 'Expected at least one xml structure'
         if '<done />' in response_text:
