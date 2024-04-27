@@ -1,4 +1,3 @@
-
 import subprocess
 from uuid import uuid4
 from os.path import exists, join
@@ -161,21 +160,22 @@ class AgentShell:
             # Wait for 100 ms
             sleep(sleep_interval)
             output = self.read_output(command_id)
-        output_command_dict = {
+        roundtrip_dict = {
             "command_id": command_id,
             "command_input": command,
             "command_output": output,
             "shell_id": self.shell_id,
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         }
-        self.output_list.append(output_command_dict)
+        self.output_list.append(roundtrip_dict)
         assert len(self.input_list) == len(self.output_list), "Failed assertion that input list is the same length as output list"
         input_list_command_ids = [command['command_id'] for command in self.input_list]
         output_list_command_ids = [command['command_id'] for command in self.output_list]    
         assert input_list_command_ids == output_list_command_ids, "Failed assertion that input list command ids are the same as output list command ids"
-        if self.redis_pubsub_channel:
-            self.redis.publish(self.redis_pubsub_channel, json.dumps(output_command_dict))
-        return command_id, output
+        if self.redis_pubsub_channel and self.redis:
+            print('SHELL PUBLISHING')
+            self.redis.publish(self.redis_pubsub_channel, json.dumps(roundtrip_dict))
+        return roundtrip_dict
 
     # reads the output file and finds the output of the command with the given command_id
     def read_output(self, command_id):
@@ -219,7 +219,9 @@ if __name__ == "__main__":
             if command_input.strip().lower() == "exit":
                 print("Exiting Terminal Wrapper.")
                 break
-            command_id, command_output = tw.round_trip(command_input)
+            roundtrip_dict = tw.round_trip(command_input)
+            command_id = roundtrip_dict['command_id']
+            command_output = roundtrip_dict['command_output']
             print('%', command_id)
             print(command_output)
 

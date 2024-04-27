@@ -9,11 +9,11 @@ openai/gpt-3.5-turbo
 google/gemini-pro
 mistralai/mixtral-8x7b
 '''
-def get_pre_prompt(challenge):
+def get_pre_prompt(task_prompt, workdir):
     pre_prompt = [
         {
             "role": "user",
-            "content": f"You are a friendly chatbot that has access to a stateful unix shell to help with the task described in the <task> tag. You can run commands and access the filesystem, by using the <stdin> tag to specify input to the shell. Instead of a human user that will interact with you, the user response will be the output from the shell given in the <stdout> command. \n Your current task is this:\n  <task>\n{challenge.task_prompt}\n</task>\nIf you think you're done with the entire task., use the <done /> tag as a standalone tag (not inside stdin tag of course). DO NOT JUST RESPOND WITH CODE, THE CODE HAS TO BE INSIDE <stdin> TAGS TO WORK."
+            "content": f"You are a friendly chatbot that has access to a stateful unix shell to help with the task described in the <task> tag. You can run commands and access the filesystem, by using the <stdin> tag to specify input to the shell. Instead of a human user that will interact with you, the user response will be the output from the shell given in the <stdout> command. \n Your current task is this:\n  <task>\n{task_prompt}\n</task>\nIf you (the assistant) think you're done with the entire task., you (the assistant) use the <done /> tag as a standalone tag (not inside stdin tag of course). DO NOT JUST RESPOND WITH CODE, THE CODE HAS TO BE INSIDE <stdin> TAGS TO WORK."
         },
         {
             "role": "assistant",
@@ -21,7 +21,7 @@ def get_pre_prompt(challenge):
         },
         {
             "role": "user",
-            "content": f"<stdout>{challenge.workdir}</stdout>"
+            "content": f"<stdout>{workdir}</stdout>"
         }
     ]
     return pre_prompt
