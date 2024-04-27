@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Redis Pub/Sub Messages</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <style>
+        body {
+            background-color: #1e1e1e; /* Dark background similar to a terminal */
+            color: #dcdcdc; /* Light grey text color */
+            font-family: 'Courier New', Courier, monospace; /* Monospace font for terminal feel */
+        }
+        #messages {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            height: 90vh;
+            overflow-y: scroll;
+            display: flex;
+            flex-direction: column-reverse;
+        }
+        .message-box {
+            padding: 10px;
+            margin: 5px 0;
+            word-wrap: break-word;
+            border: 1px solid #555; /* Subtle border for each message */
+            background-color: #2d2d2d; /* Slightly lighter dark background for message boxes */
+        }
+        .terminal-item {
+            padding: 2px 5px;
+            font-size: 0.9em;
+        }
+        .role-user {
+            background-color: #004482; /* Darker blue for user */
+        }
+        .role-assistant {
+            background-color: #006400; /* Darker green for assistant */
+        }
+    </style>
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', (event) => {
+            var socket = io();
+            socket.on('new_message', function(data) {
+                console.log(data);
+                var msgData = JSON.parse(data.data);
+                console.log(msgData);
+
+                var node = document.createElement("LI");
+                var innerDiv = document.createElement("div");
+                innerDiv.innerHTML = msgData.command_input.replace(/\n/g, '<br>');
+                innerDiv.classList.add('terminal-item');
+                node.appendChild(innerDiv);
+                node.classList.add('message-box', 'role-user');
+                document.getElementById("messages").prepend(node);
+
+                var node = document.createElement("LI");
+                var innerDiv = document.createElement("div");
+                innerDiv.innerHTML = msgData.command_output.replace(/\n/g, '<br>');
+                innerDiv.classList.add('terminal-item');
+                node.appendChild(innerDiv);
+                node.classList.add('message-box', 'role-assistant');
+                document.getElementById("messages").prepend(node);
+            });
+        });
+    </script>
+</head>
+<body>
+    <ul id="messages"></ul>
+</body>
+</html>
