@@ -5,27 +5,37 @@
     <title>Redis Pub/Sub Messages</title>
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <style>
+        body {
+            background-color: #1e1e1e; /* Dark background similar to a terminal */
+            color: #dcdcdc; /* Light grey text color */
+            font-family: 'Courier New', Courier, monospace; /* Monospace font for terminal feel */
+        }
         #messages {
             list-style: none;
             padding: 0;
             margin: 0;
-            height: 90vh; /* Adjusted height to leave some space for potential UI elements */
+            height: 90vh;
             overflow-y: scroll;
             display: flex;
-            flex-direction: column-reverse; /* New messages appear at the bottom */
+            flex-direction: column-reverse;
         }
         .message-box {
             padding: 10px;
-            margin: 0;
+            margin: 5px 0;
             word-wrap: break-word;
+            border: 1px solid #555; /* Subtle border for each message */
+            background-color: #2d2d2d; /* Slightly lighter dark background for message boxes */
+        }
+        .terminal-item {
+            padding: 2px 5px;
+            font-size: 0.9em;
         }
         .role-user {
-            background-color: #ADD8E6; /* Light blue for user */
+            background-color: #004482; /* Darker blue for user */
         }
         .role-assistant {
-            background-color: #90EE90; /* Light green for assistant */
+            background-color: #006400; /* Darker green for assistant */
         }
-        /* Add additional role colors as needed */
     </style>
     <script type="text/javascript">
         document.addEventListener('DOMContentLoaded', (event) => {
@@ -33,39 +43,23 @@
             socket.on('new_message', function(data) {
                 console.log(data);
                 var msgData = JSON.parse(data.data);
-                console.log(msgData)
-                /*
-                var lastMsg = document.querySelector('#messages li:first-child');
-                if (lastMsg && lastMsg.classList.contains('role-' + msgData.role)) {
-                    lastMsg.innerHTML += '<br>' + msgData.content;
-                } else {
-                    var node = document.createElement("LI");
-                    var textnode = document.createTextNode(msgData.content);
-                    node.appendChild(textnode);
-                    node.classList.add('message-box', 'role-' + msgData.role);
-                    document.getElementById("messages").prepend(node); // Add to the top
-                }
-                */
+                console.log(msgData);
 
                 var node = document.createElement("LI");
-                // Replace newline characters with <br> tags
-                var commandOutputWithBreaks = msgData.command_input.replace(/\n/g, '<br>');
-                // Create a div that will interpret the <br> as HTML, not text
                 var innerDiv = document.createElement("div");
-                innerDiv.innerHTML = commandOutputWithBreaks;
+                innerDiv.innerHTML = msgData.command_input.replace(/\n/g, '<br>');
+                innerDiv.classList.add('terminal-item');
                 node.appendChild(innerDiv);
                 node.classList.add('message-box', 'role-user');
-                document.getElementById("messages").prepend(node); // Add to the top
+                document.getElementById("messages").prepend(node);
 
                 var node = document.createElement("LI");
-                // Replace newline characters with <br> tags
-                var commandOutputWithBreaks = msgData.command_output.replace(/\n/g, '<br>');
-                // Create a div that will interpret the <br> as HTML, not text
                 var innerDiv = document.createElement("div");
-                innerDiv.innerHTML = commandOutputWithBreaks;
+                innerDiv.innerHTML = msgData.command_output.replace(/\n/g, '<br>');
+                innerDiv.classList.add('terminal-item');
                 node.appendChild(innerDiv);
                 node.classList.add('message-box', 'role-assistant');
-                document.getElementById("messages").prepend(node); // Add to the top
+                document.getElementById("messages").prepend(node);
             });
         });
     </script>
