@@ -6,17 +6,18 @@ import os
 app = Flask(__name__)
 socketio = SocketIO(app)
 redis_client = redis.Redis(password=os.environ['REDIS_PASSWORD'])
-redis_pubsub_channel='myagentshellchannel'
+pubsub_channels = ['myagentshellchannel', 'myagentchannel']
 
 #redis.Redis()
 
 def redis_subscriber():
     pubsub = redis_client.pubsub()
-    pubsub.subscribe(redis_pubsub_channel)
+    pubsub.subscribe(*pubsub_channels)
     for message in pubsub.listen():
         if message['type'] == 'message':
-            print('Emitting', message['data'])
-            socketio.emit('new_message', {'data': message['data'].decode()})
+            channel = message['channel'].decode()
+            print('Emitting', channel, message['data'])
+            socketio.emit(channel, {'data': message['data'].decode()})
 
 @app.route('/index1')
 def index():
@@ -25,6 +26,10 @@ def index():
 @app.route('/index2')
 def index2():
     return render_template('index2.html')
+
+@app.route('/agentchannel')
+def agentchannel():
+    return render_template('agentchannel.html')
 
 
 if __name__ == '__main__':

@@ -6,7 +6,7 @@
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script type="text/javascript">
         var socket = io();
-        socket.on('new_message', function(data) {
+        socket.on('myagentshellchannel', function(data) {
             var node = document.createElement("LI");
             var textnode = document.createTextNode(data.data);
             node.appendChild(textnode);

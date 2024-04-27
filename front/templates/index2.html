@@ -40,7 +40,7 @@
     <script type="text/javascript">
         document.addEventListener('DOMContentLoaded', (event) => {
             var socket = io();
-            socket.on('new_message', function(data) {
+            socket.on('myagentshellchannel', function(data) {
                 console.log(data);
                 var msgData = JSON.parse(data.data);
                 console.log(msgData);

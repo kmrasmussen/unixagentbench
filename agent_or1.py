@@ -10,6 +10,7 @@ from utils import *
 import uuid
 from typing import List, Optional
 import redis
+import time
 
 class SingleTaskAgent():
     def __init__(self, model : str, cwd : str, task_prompt : str,
@@ -57,14 +58,14 @@ class SingleTaskAgent():
             #assert len(xml_structures) == 0, "Expected no xml structures together with <done /> tag, should be implemented."
             round_dict['processed_type'].append('done')          
         
-        if len(xml_structures) == 0:
+        if len(xml_structures) == 0 or 'done' in [xml_structure['tag'] for xml_structure in xml_structures]:
             print('NO XML CONTINUE')
             round_dict['processed_type'].append('no_xml')
             if 'done' not in round_dict['processed_type']:
                 round_dict['user_content'] = "ERROR. No stdin or done tag found. Remember that all code to be executed in shell must be in <stdin> tags. If you think you're done with the task, use the <done /> tag."
             else:
                 round_dict['user_content'] = 'USER REPLY EMPTY BECUASE OF DONE TAG.'
-        else:
+        elif xml_structures[0]['tag'] == 'stdin':
             stdout_string = ''
             for xml_structure in xml_structures:
                 assert xml_structure['tag'] == 'stdin', 'Expected stdin tag'
@@ -76,6 +77,8 @@ class SingleTaskAgent():
             round_dict['processed_type'].append('stdin')
             round_dict['user_content'] = stdout_string
             round_dict['roundtrip_dict'] = roundtrip_dict
+        else:
+            assert False, 'NOT IMPLEMENTED: Expected stdin tag or done tag'
         print('USER:', round_dict['user_content'])
         self.messages.append({
             "role": "user",
@@ -85,6 +88,7 @@ class SingleTaskAgent():
             print('AGENT PUBLISHING')
             self.redis_client.publish(self.agent_redis_pubsub_channel, json.dumps(round_dict))
         print('round return bool', ('done' in round_dict['processed_type']), round_dict['processed_type'])
+        round_dict['timestamp'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         return round_dict
     
     def run(self):
@@ -110,52 +114,6 @@ def start_agent_on_challenge(challenge, model, max_rounds):
                             redis_client, shell_redis_pubsub_channel,
                             agent_redis_pubsub_channel)
     agent.run()
-    print('comparing work and postdir:', diff_workdir_postdir_compare(challenge.workdir, challenge.postdir))
-
-def start_agent_old(challenge, model, max_rounds):
-    tw = AgentShell(cwd=challenge.workdir)
-    messages = get_pre_prompt(challenge.task_prompt, challenge.workdir)
-    for round_i in range(max_rounds):
-        print('ROUND', round_i)
-        response_text = get_completion(
-            messages, model, OPENROUTER_API_KEY, add_assistant_response=True)
-        print('ASSISTANT:', response_text)
-        xml_structures = extract_xml_structures(response_text)
-        print('XML:', xml_structures)
-        #assert len(xml_structures) > 0, 'Expected at least one xml structure'
-        if '<done />' in response_text:
-            print('Agent used <done /> tag to signal completion. Exiting.')
-            assert len(xml_structures) == 0, "Expected no xml structures together with <done /> tag, should be implemented."
-            break
-        if len(xml_structures) == 0:
-            print('NO XML CONTINUE')
-            messages.append({
-                "role": "user",
-                "content": "ERROR. No stdin or done tag found. Remember that all code to be executed in shell must be in <stdin> tags. If you think you're done with the task, use the <done /> tag."
-            })
-            continue
-        #assert len(xml_structures) == 1, 'Expected one xml structure'
-        stdout_string = ''
-        for xml_structure in xml_structures:
-            #print('xml struct', xml_structure)
-            if xml_structure['tag'] == 'done':
-                print('Agent used <done /> tag to signal completion. Exiting.')
-                break
-            assert xml_structure['tag'] == 'stdin', 'Expected stdin tag'
-            command_input = xml_structure['content']
-            #print('command input', command_input)
-            roundtrip_dict = tw.round_trip(command_input)
-            command_id = roundtrip_dict['command_id']
-            command_output = roundtrip_dict['command_output']
-            #print('%', command_id)
-            #print('command output', command_output)
-            stdout_string += '<stdout>' + command_output + '</stdout>'
-        print('USER:', stdout_string)
-        messages.append({
-            "role": "user",
-            "content": stdout_string
-        })
-    print('END OF ROUNDS')
     print('comparing work and postdir:', diff_workdir_postdir_compare(challenge.workdir, challenge.postdir))
 
 # take command line arguments

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Redis Pub/Sub Messages</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <style>
+        body {
+            background-color: #1e1e1e; /* Dark background similar to a terminal */
+            color: #dcdcdc; /* Light grey text color */
+            font-family: 'Courier New', Courier, monospace; /* Monospace font for terminal feel */
+        }
+        #messages {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            height: 90vh;
+            overflow-y: scroll;
+            display: flex;
+            flex-direction: column-reverse;
+        }
+        .message-box {
+            padding: 10px;
+            margin: 5px 0;
+            word-wrap: break-word;
+            border: 1px solid #555; /* Subtle border for each message */
+            background-color: #2d2d2d; /* Slightly lighter dark background for message boxes */
+        }
+        .terminal-item {
+            padding: 2px 5px;
+            font-size: 0.9em;
+        }
+        .role-terminal-input {
+            background-color: white; /* Darker blue for user */
+            color: black;
+        }
+        .role-terminal-output {
+            background-color: white; /* Darker green for assistant */
+            color: black;
+        }
+        .role-response-text {
+            background-color: black; /* Darker green for assistant */
+        }
+        .role-response-done {
+            background-color: #006400; /* Darker green for assistant */
+        }
+    </style>
+    <script type="text/javascript">
+        msgDataList = []
+        document.addEventListener('DOMContentLoaded', (event) => {
+            var socket = io();
+            socket.on('myagentchannel', function(data) {
+                console.log(data);
+                var msgData = JSON.parse(data.data);
+                console.log(msgData);
+                
+                msgDataList.push(msgData);
+                // reset the messages dom and render all again
+                document.getElementById("messages").innerHTML = "";
+                msgDataList.forEach(msgData => {
+                    renderMsgData(msgData);
+                });
+                //renderMsgData(msgData);
+            });
+        });
+
+        function addMsgbox(innerDivClass, role) {
+            var node = document.createElement("LI");
+            var innerDiv = document.createElement("div");
+            innerDiv.innerHTML = "Hello World";
+            innerDiv.classList.add(innerDivClass);
+            node.appendChild(innerDiv);
+            node.classList.add('message-box', role);
+            document.getElementById("messages").prepend(node);
+        }
+
+        function renderMsgData(msgData) {
+            console.log("renderMsgData")
+            // check if "stdin" is in msgData.processed_type
+            if (msgData.processed_type.includes("stdin")) {
+
+                var node = document.createElement("LI");
+                var innerDiv = document.createElement("div");
+                innerDiv.innerHTML = msgData.response_text.replace(/\n/g, '<br>');
+                innerDiv.classList.add('terminal-item');
+                node.appendChild(innerDiv);
+                node.classList.add('message-box', 'role-response-text');
+                document.getElementById("messages").prepend(node);
+
+                var node = document.createElement("LI");
+                var innerDiv = document.createElement("div");
+                innerDiv.innerHTML = msgData.roundtrip_dict.command_input.replace(/\n/g, '<br>');
+                innerDiv.classList.add('terminal-item');
+                node.appendChild(innerDiv);
+                node.classList.add('message-box', 'role-terminal-input');
+                document.getElementById("messages").prepend(node);
+
+                var node = document.createElement("LI");
+                var innerDiv = document.createElement("div");
+                innerDiv.innerHTML = msgData.roundtrip_dict.command_output.replace(/\n/g, '<br>');
+                innerDiv.classList.add('terminal-item');
+                node.appendChild(innerDiv);
+                node.classList.add('message-box', 'role-terminal-output');
+                document.getElementById("messages").prepend(node);
+            }
+
+            if(msgData.processed_type.includes("done")) {
+                console.log('done case')
+
+                var node = document.createElement("LI");
+                var innerDiv = document.createElement("div");
+                innerDiv.innerHTML = msgData.response_text.replace(/\n/g, '<br>');
+                innerDiv.classList.add('terminal-item');
+                node.appendChild(innerDiv);
+                node.classList.add('message-box', 'role-response-text');
+                document.getElementById("messages").prepend(node);
+
+                var node = document.createElement("LI");
+                var innerDiv = document.createElement("div");
+                innerDiv.innerHTML = "DONE";
+                innerDiv.classList.add('terminal-item');
+                node.appendChild(innerDiv);
+                node.classList.add('message-box', 'role-response-done');
+                document.getElementById("messages").prepend(node);
+            }
+        }
+    </script>
+</head>
+<body>
+    <ul id="messages"></ul>
+</body>
+</html>
