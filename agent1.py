@@ -1,6 +1,11 @@
 from agentshells.shell1 import AgentShell
+import redis
+import os
 
-tw = AgentShell(cwd='/home/ec2-user/projects/unixagentbench/challenges/challenge1')
+redis_client = redis.Redis(password=os.environ['REDIS_PASSWORD'])
+tw = AgentShell(cwd='/home/ec2-user/projects/unixagentbench/emptydir',
+                redis_pubsub_channel='myagentshellchannel',
+                redis_client=redis_client)
 try:
     print("Terminal Wrapper: Type your command and press enter. Type 'exit' to quit.")
 

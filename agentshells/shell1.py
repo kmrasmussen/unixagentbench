@@ -6,25 +6,40 @@ from time import sleep
 import time
 import json
 import re
+import redis
 
 class AgentShell:
-    def __init__(self, cwd=None):
+    def __init__(self, cwd=None, redis_pubsub_channel=None, redis_client=None):
         # Open the output file in append mode so that each command's output is added to the end of the file
         # the output file is created as a temporary file
         # erase out.txt and in.jsonl files if they exist
         if exists('out.txt'):
             open('out.txt', 'w').close()
         if exists('in.jsonl'):
-            open('in.jsonl', 'w').close()
+            open('in.jsonl', 'w').close()        
         self.output_file = open('out.txt', 'a')
         self.input_file = open('in.jsonl', 'a')
         self.input_list = []
         self.output_list = []
         # Start a subprocess with a shell, directing stdout and stderr to the same output file
+        if cwd is not None:
+            assert exists(cwd), "The specified AgentShell cwd (work directory) does not exist"
         self.process = subprocess.Popen(["/bin/bash"], stdin=subprocess.PIPE, stdout=self.output_file, stderr=subprocess.STDOUT, text=True, cwd=cwd)
         #use python3 instead
         #self.process = subprocess.Popen(["python3"], stdin=subprocess.PIPE, stdout=self.output_file, stderr=subprocess.STDOUT, text=True)
-
+        if redis_pubsub_channel:
+            # redis pubsub will only be used for publishing not for subscribing
+            self.redis_pubsub_channel = redis_pubsub_channel
+            assert redis_client is not None, "redis_client must be provided if redis_pubsub_channel is provided"
+            self.redis = redis_client
+            print('agentshell redis channel:', self.redis_pubsub_channel)
+        else:
+            self.redis_pubsub_channel = None
+            self.redis = None
+            print('no agentshell redis channel used')
+        # make uuid4 for the shell object itself
+        self.shell_id = str(uuid4())
+            
     def get_command_output_list(self, merge_orphans=False):
         output_list = []
         with open('out.txt', 'r') as file:
@@ -148,7 +163,9 @@ class AgentShell:
             output = self.read_output(command_id)
         output_command_dict = {
             "command_id": command_id,
+            "command_input": command,
             "command_output": output,
+            "shell_id": self.shell_id,
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         }
         self.output_list.append(output_command_dict)
@@ -156,6 +173,8 @@ class AgentShell:
         input_list_command_ids = [command['command_id'] for command in self.input_list]
         output_list_command_ids = [command['command_id'] for command in self.output_list]    
         assert input_list_command_ids == output_list_command_ids, "Failed assertion that input list command ids are the same as output list command ids"
+        if self.redis_pubsub_channel:
+            self.redis.publish(self.redis_pubsub_channel, json.dumps(output_command_dict))
         return command_id, output
 
     # reads the output file and finds the output of the command with the given command_id
