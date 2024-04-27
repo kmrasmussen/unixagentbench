@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Redis Pub/Sub Messages</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <style>
+        #messages {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            height: 90vh; /* Adjusted height to leave some space for potential UI elements */
+            overflow-y: scroll;
+            display: flex;
+            flex-direction: column-reverse; /* New messages appear at the bottom */
+        }
+        .message-box {
+            padding: 10px;
+            margin: 0;
+            word-wrap: break-word;
+        }
+        .role-user {
+            background-color: #ADD8E6; /* Light blue for user */
+        }
+        .role-assistant {
+            background-color: #90EE90; /* Light green for assistant */
+        }
+        /* Add additional role colors as needed */
+    </style>
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', (event) => {
+            var socket = io();
+            socket.on('new_message', function(data) {
+                console.log(data);
+                var msgData = JSON.parse(data.data);
+                console.log(msgData)
+                /*
+                var lastMsg = document.querySelector('#messages li:first-child');
+                if (lastMsg && lastMsg.classList.contains('role-' + msgData.role)) {
+                    lastMsg.innerHTML += '<br>' + msgData.content;
+                } else {
+                    var node = document.createElement("LI");
+                    var textnode = document.createTextNode(msgData.content);
+                    node.appendChild(textnode);
+                    node.classList.add('message-box', 'role-' + msgData.role);
+                    document.getElementById("messages").prepend(node); // Add to the top
+                }
+                */
+
+                var node = document.createElement("LI");
+                // Replace newline characters with <br> tags
+                var commandOutputWithBreaks = msgData.command_input.replace(/\n/g, '<br>');
+                // Create a div that will interpret the <br> as HTML, not text
+                var innerDiv = document.createElement("div");
+                innerDiv.innerHTML = commandOutputWithBreaks;
+                node.appendChild(innerDiv);
+                node.classList.add('message-box', 'role-user');
+                document.getElementById("messages").prepend(node); // Add to the top
+
+                var node = document.createElement("LI");
+                // Replace newline characters with <br> tags
+                var commandOutputWithBreaks = msgData.command_output.replace(/\n/g, '<br>');
+                // Create a div that will interpret the <br> as HTML, not text
+                var innerDiv = document.createElement("div");
+                innerDiv.innerHTML = commandOutputWithBreaks;
+                node.appendChild(innerDiv);
+                node.classList.add('message-box', 'role-assistant');
+                document.getElementById("messages").prepend(node); // Add to the top
+            });
+        });
+    </script>
+</head>
+<body>
+    <ul id="messages"></ul>
+</body>
+</html>
